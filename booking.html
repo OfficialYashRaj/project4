@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student-Teacher Booking</title>
+  <link rel="stylesheet" href="style.css" />
+  <script type="module">
+    
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    window.register = async function () {
+      const email = document.getElementById("reg-email").value;
+      const password = document.getElementById("reg-password").value;
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        console.log("Registered:", email);
+        alert("Registration successful");
+        showSection('login');
+      } catch (error) {
+        console.error("Registration Error:", error);
+        alert(error.message);
+      }
+    };
+
+    window.login = async function () {
+      const email = document.getElementById("login-email").value;
+      const password = document.getElementById("login-password").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        console.log("Logged in:", email);
+        alert("Login successful");
+        showSection('book');
+      } catch (error) {
+        console.error("Login Error:", error);
+        alert(error.message);
+      }
+    };
+
+    window.logout = async function () {
+      try {
+        await signOut(auth);
+        console.log("User logged out");
+        alert("Logged out");
+        showSection('login');
+      } catch (error) {
+        console.error("Logout Error:", error);
+      }
+    };
+
+    window.bookAppointment = async function () {
+      const teacherEmail = document.getElementById("teacherEmail").value;
+      const time = document.getElementById("time").value;
+      const reason = document.getElementById("reason").value;
+      try {
+        await addDoc(collection(db, "appointments"), {
+          teacherEmail,
+          time,
+          reason,
+          studentEmail: auth.currentUser.email,
+          status: "Pending"
+        });
+        console.log("Appointment booked:", teacherEmail);
+        alert("Appointment booked successfully");
+      } catch (error) {
+        console.error("Booking Error:", error);
+        alert(error.message);
+      }
+    };
+
+    window.showSection = function (id) {
+      document.querySelectorAll('main section').forEach(sec => sec.style.display = 'none');
+      document.getElementById(id).style.display = 'block';
+    };
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Student-Teacher Appointment System</h1>
+    <nav>
+      <button onclick="showSection('login')">Login</button>
+      <button onclick="showSection('register')">Register</button>
+      <button onclick="showSection('book')">Book Appointment</button>
+      <button onclick="logout()">Logout</button>
+    </nav>
+  </header>
+
+  <main>
+    
+    <section id="register" style="display:none">
+      <h2>Register</h2>
+      <input type="email" id="reg-email" placeholder="Email" />
+      <input type="password" id="reg-password" placeholder="Password" />
+      <button onclick="register()">Register</button>
+    </section>
+
+    
+    <section id="login">
+      <h2>Login</h2>
+      <input type="email" id="login-email" placeholder="Email" />
+      <input type="password" id="login-password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+    </section>
+
+    
+    <section id="book" style="display:none">
+      <h2>Book Appointment</h2>
+      <input type="text" id="teacherEmail" placeholder="Teacher Email" />
+      <input type="datetime-local" id="time" />
+      <textarea id="reason" placeholder="Reason"></textarea>
+      <button onclick="bookAppointment()">Book</button>
+    </section>
+  </main>
+</body>
+</html>
